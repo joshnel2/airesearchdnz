@@ -1,6 +1,7 @@
 {
-  "name": "dorf-nelson-zauderer-confidential-assistant",
-  "version": "0.1.0",
+  "name": "legal-research-tool",
+  "version": "1.0.0",
+  "description": "Legal research tool powered by Thomson Reuters Westlaw and AI",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -37,5 +38,15 @@
     "eslint": "^8",
     "eslint-config-next": "14.2.5",
     "typescript": "^5"
-  }
+  },
+  "keywords": [
+    "legal",
+    "research",
+    "westlaw",
+    "ai",
+    "case-law",
+    "legal-tech"
+  ],
+  "author": "Legal Research Tool",
+  "license": "UNLICENSED"
 }

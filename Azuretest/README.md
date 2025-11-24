@@ -1,275 +1,176 @@
-# DNZ AI Document Redlining System
+# Legal Research Tool
 
-Professional AI-powered legal document redlining for Dorf Nelson & Zauderer LLP.
+A powerful legal research application that integrates Thomson Reuters Westlaw API with AI assistance to provide comprehensive legal research capabilities.
 
-## Overview
+## Features
 
-This application provides attorneys with advanced AI-powered document redlining capabilities using Azure OpenAI. Upload legal documents or paste text, and receive intelligent revisions with visual track changes (additions in green, deletions in red).
+- 🔍 **Westlaw Integration**: Direct access to Thomson Reuters Westlaw legal database
+- 🤖 **AI-Powered Research**: Intelligent legal research assistant powered by Azure OpenAI
+- 📚 **Case Law Search**: Search and analyze cases, statutes, and regulations
+- 📝 **Citation Management**: Automatic citation extraction and KeyCite integration
+- 🔐 **Secure API Key Storage**: Encrypted storage of user Westlaw API credentials
+- 💬 **Interactive Chat Interface**: Natural language queries for legal research
 
-## Key Features
+## Prerequisites
 
-### 🎯 AI-Powered Document Revision
-- Intelligent legal document editing and improvement
-- Maintains legal intent and professional tone
-- Context-aware suggestions based on document type
-- Conservative editing approach for legal precision
+- Node.js 18+ and npm
+- Azure OpenAI account with GPT-4 or GPT-3.5 deployment
+- Thomson Reuters Westlaw API key (obtain from [Thomson Reuters Developer Portal](https://developer.thomsonreuters.com/))
 
-### 📄 Multiple File Format Support
-- **PDF** - Extract and redline PDF documents
-- **Word** (.docx, .doc) - Process Word documents
-- **Text** (.txt, .rtf, .csv) - Plain text files
-- **Excel** (.xlsx, .xls) - Spreadsheet data
+## Getting Started
 
-### 🎨 Visual Track Changes
-- **Green highlighting** - Additions and improvements
-- **Red strikethrough** - Deletions and removed text
-- **Interactive controls** - Hover to accept/reject individual changes
-- **Real-time statistics** - Track additions, deletions, pending changes
-
-### ⚡ Professional Workflow
-- Upload documents or paste text directly
-- Specify document type (Contract, Brief, Motion, etc.)
-- Provide custom revision instructions
-- Accept/reject changes individually or in bulk
-- Export clean final documents
-
-## Technology Stack
-
-- **Next.js 14** - React framework with App Router
-- **Azure OpenAI** - GPT-4 powered document analysis
-- **TypeScript** - Type-safe code
-- **Tailwind CSS** - Modern, responsive UI
-- **Diff Library** - Precise word-level change tracking
-
-## Setup & Deployment
-
-### Environment Variables
-
-You need **3 environment variables** from Azure AI Foundry:
+### 1. Install Dependencies
 
 ```bash
-AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
-AZURE_OPENAI_API_KEY=your-api-key-here
-AZURE_OPENAI_DEPLOYMENT_NAME=your-deployment-name
-```
-
-### Local Development
-
-```bash
-# Install dependencies
 npm install
-
-# Set environment variables
-cp .env.example .env
-# Edit .env with your Azure credentials
-
-# Run development server
-npm run dev
-
-# Open http://localhost:3000
 ```
 
-### Azure Deployment
+### 2. Configure Environment Variables
 
-The repository is structured for Azure Web App deployment:
+Copy `.env.example` to `.env` and fill in your credentials:
 
 ```bash
-# Using Azure CLI
-az webapp up \
-  --name your-app-name \
-  --resource-group your-resource-group \
-  --runtime "NODE:18-lts"
-
-# Or use GitHub Actions (workflow included)
-git push origin main
+cp .env.example .env
 ```
 
-See `AZURE_DEPLOYMENT_GUIDE.md` for detailed deployment instructions.
+Required environment variables:
+- `AZURE_OPENAI_ENDPOINT`: Your Azure OpenAI endpoint URL
+- `AZURE_OPENAI_API_KEY`: Your Azure OpenAI API key
+- `AZURE_OPENAI_DEPLOYMENT_NAME`: Your GPT model deployment name
 
-## How to Use
+Optional:
+- `WESTLAW_API_BASE_URL`: Custom Westlaw API endpoint (defaults to https://api.westlaw.com/v1)
 
-### 1. Upload or Paste Document
+### 3. Run the Application
 
-**Option A: Upload File**
-- Click "Choose File" button
-- Select your legal document (PDF, Word, Text, Excel)
-- Document text is automatically extracted
+Development mode:
+```bash
+npm run dev
+```
 
-**Option B: Paste Text**
-- Copy your document text
-- Paste directly into the text area
+Production mode:
+```bash
+npm run build
+npm start
+```
 
-### 2. Configure Settings (Optional)
+The application will be available at `http://localhost:3000`
 
-- **Document Type**: Select from Contract, Agreement, Motion, Brief, etc.
-- **Revision Instructions**: Specify custom editing goals
-  - Examples: "Make more concise", "Fix grammar", "Add legal disclaimers"
+## Usage
 
-### 3. Generate Redline
+### Connecting Your Westlaw Account
 
-- Click "Generate Redline" button
-- AI analyzes and revises the document
-- Track changes are displayed with color coding
+1. Click the "Connect Westlaw" button in the application
+2. Enter your Westlaw API key (obtain from Thomson Reuters Developer Portal)
+3. Optionally enter your Client ID
+4. Click "Connect" to validate and save your credentials
 
-### 4. Review Changes
+Your API key is stored securely and encrypted locally.
 
-- **Green text** = Additions
-- **Red strikethrough** = Deletions
-- Hover over changes to accept/reject
-- View statistics: additions, deletions, pending
+### Conducting Legal Research
 
-### 5. Finalize Document
+Once connected, you can ask questions like:
 
-- **Accept All** - Keep all AI suggestions
-- **Reject All** - Revert to original
-- **Export Clean** - Download final version
-- **New Document** - Start over with new file
+- "Find cases about employment discrimination in California"
+- "What is the legal standard for summary judgment?"
+- "Search for recent Supreme Court decisions on First Amendment"
+- "Find statutes on contract formation"
+
+The AI will automatically:
+1. Search the Westlaw database for relevant results
+2. Analyze the results
+3. Provide accurate citations and case summaries
+4. Link to full documents on Westlaw
 
 ## API Endpoints
 
-### `POST /api/redline`
+### Westlaw Connection
 
-Generate AI-powered redline for a document.
+- `POST /api/westlaw/connect` - Connect Westlaw API key
+- `GET /api/westlaw/connect` - Check connection status
+- `DELETE /api/westlaw/connect` - Disconnect Westlaw account
 
-**Request:**
-```json
-{
-  "originalText": "string",
-  "instructions": "string (optional)",
-  "documentType": "string (optional)"
-}
-```
+### Westlaw Search
 
-**Response:**
-```json
-{
-  "originalText": "string",
-  "revisedText": "string",
-  "success": true
-}
-```
+- `POST /api/westlaw/search` - Search Westlaw database
+  - Body: `{ query: string, options?: SearchOptions }`
 
-### `GET /api/health`
+### Chat
 
-Health check endpoint.
-
-**Response:**
-```json
-{
-  "status": "ok",
-  "timestamp": "2025-11-21T16:00:00.000Z"
-}
-```
+- `POST /api/chat` - Chat with AI assistant
+  - Body: `{ messages: Message[], enableWestlaw?: boolean }`
 
 ## Project Structure
 
 ```
-/
+Azuretest/
 ├── app/
 │   ├── api/
-│   │   ├── redline/route.ts    # Redlining AI endpoint
-│   │   └── health/route.ts     # Health check
-│   ├── layout.tsx              # Root layout
-│   └── page.tsx                # Main page
+│   │   ├── chat/          # Chat API with Westlaw integration
+│   │   ├── westlaw/       # Westlaw API endpoints
+│   │   └── health/        # Health check endpoint
+│   ├── layout.tsx
+│   └── page.tsx           # Main application page
 ├── components/
-│   ├── RedlineInterface.tsx    # Main UI component
-│   ├── RedlineEditor.tsx       # Track changes viewer
-│   └── RedlineModal.tsx        # Legacy modal (unused)
+│   ├── LegalResearchInterface.tsx  # Main research UI
+│   └── WestlawConnection.tsx       # Westlaw connection component
 ├── lib/
-│   ├── openai.ts              # Azure OpenAI client
-│   └── telemetry.ts           # Application Insights
-├── public/                     # Static assets
-├── package.json               # Dependencies
-├── app.js                     # Custom Node.js server
-├── web.config                 # IIS configuration
-└── startup.sh                 # Azure startup script
+│   ├── westlaw.ts         # Westlaw API client
+│   ├── user-settings.ts   # User settings management
+│   ├── openai.ts          # Azure OpenAI client
+│   └── telemetry.ts       # Application insights
+└── public/
 ```
 
-## Document Types Supported
+## Security Notes
 
-The AI is optimized for various legal document types:
+- API keys are stored locally in encrypted format
+- Never commit `.env` file or API keys to version control
+- User settings are stored in `.user-settings/` directory (gitignored)
+- All API requests are validated and sanitized
 
-- **Contracts** - Purchase agreements, service contracts
-- **Agreements** - NDAs, partnership agreements
-- **Motions** - Court motions and filings
-- **Briefs** - Legal briefs and memoranda
-- **Letters** - Legal correspondence
-- **Pleadings** - Complaints, answers, petitions
-- **Discovery** - Interrogatories, requests for production
-- **Memoranda** - Legal memos and research
+## Deployment
 
-## AI Behavior
+### Azure App Service
 
-The redlining AI is designed to:
+1. Set environment variables in Azure Portal
+2. Deploy using Azure CLI or GitHub Actions
+3. Ensure Node.js 18+ runtime is selected
 
-✅ **Maintain Legal Intent** - Preserves original legal meaning  
-✅ **Professional Tone** - Keeps formal legal language  
-✅ **Conservative Edits** - Makes purposeful, targeted changes  
-✅ **Grammar & Clarity** - Fixes errors, improves readability  
-✅ **Consistency** - Ensures consistent terminology  
-✅ **Flag Issues** - Identifies potential problems or ambiguities  
-
-Temperature is set to 0.3 for consistent, reliable editing.
-
-## Security & Compliance
-
-- **Confidential Processing** - All processing is internal
-- **No Data Storage** - Documents are not permanently stored
-- **Azure Security** - Leverages Azure's enterprise-grade security
-- **HTTPS Only** - Encrypted data transmission
-- **Access Control** - Internal use for DNZ LLP staff only
-
-## Monitoring
-
-Application includes Azure Application Insights telemetry:
-
-- Request rates and response times
-- Error tracking and diagnostics
-- Custom events (redline requests)
-- Performance metrics
-
-## Support & Documentation
-
-- `REDLINING_FEATURE.md` - Detailed feature documentation
-- `AZURE_DEPLOYMENT_GUIDE.md` - Complete deployment guide
-- `AZURE_DEPLOYMENT.md` - Azure-specific configuration
-
-## Development
-
-### Key Dependencies
-
-```json
-{
-  "next": "14.2.5",
-  "react": "^18",
-  "openai": "^4.57.0",
-  "diff": "^5.0.0",
-  "pdfjs-dist": "3.11.174",
-  "mammoth": "^1.11.0",
-  "xlsx": "^0.18.5"
-}
-```
-
-### Scripts
+### Docker
 
 ```bash
-npm run dev      # Development server
-npm run build    # Production build
-npm start        # Start production server
-npm run lint     # Run ESLint
+docker build -t legal-research-tool .
+docker run -p 3000:3000 --env-file .env legal-research-tool
 ```
+
+## Westlaw API Documentation
+
+For detailed information about the Westlaw API:
+- [Thomson Reuters Developer Portal](https://developer.thomsonreuters.com/)
+- [Westlaw API Documentation](https://developer.thomsonreuters.com/westlaw)
+
+## Troubleshooting
+
+### "Invalid Westlaw API key"
+- Verify your API key is correct
+- Check your Westlaw subscription is active
+- Ensure API key has necessary permissions
+
+### "Failed to search Westlaw database"
+- Check your internet connection
+- Verify Westlaw API service status
+- Check API rate limits
+
+### Chat not working
+- Verify Azure OpenAI credentials are correct
+- Check Azure OpenAI deployment is active
+- Review browser console for errors
 
 ## License
 
-Proprietary - For internal use by Dorf Nelson & Zauderer LLP only.
+Proprietary - All rights reserved
 
-## Version
+## Support
 
-**Version:** 2.0  
-**Last Updated:** 2025-11-21  
-**Focus:** AI Document Redlining
-
----
-
-**Dorf Nelson & Zauderer LLP**  
-Confidential Legal Technology
+For issues or questions, please contact your system administrator.

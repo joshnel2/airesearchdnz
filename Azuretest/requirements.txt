@@ -1,0 +1,24 @@
+# Python Dependencies for Legal RAG System
+
+# Core dependencies
+requests>=2.31.0
+python-dotenv>=1.0.0
+
+# Azure AI Services
+azure-search-documents>=11.4.0
+azure-identity>=1.15.0
+azure-core>=1.29.0
+
+# OpenAI / Embeddings
+openai>=1.12.0
+
+# Text processing
+tiktoken>=0.5.2
+
+# Utilities
+tqdm>=4.66.1
+
+# Optional: For advanced features
+# pandas>=2.1.4
+# numpy>=1.26.3
+# beautifulsoup4>=4.12.3  # If parsing HTML from CourtListener

@@ -25,9 +25,11 @@ export async function POST(req: NextRequest) {
   if (enableWestlaw && shouldSearchWestlaw(userMessage)) {
     try {
       const settings = await getUserSettings(userId);
-      if (settings?.westlawApiKey) {
+      if (settings?.oauthToken || settings?.westlawApiKey) {
+        // SECURITY: OAuth token stays on server, never sent to client
         const client = new WestlawClient({
-          apiKey: settings.westlawApiKey,
+          oauthToken: settings.oauthToken, // Preferred: OAuth token
+          apiKey: settings.westlawApiKey,  // Fallback: Legacy API key
           clientId: settings.westlawClientId,
         });
         

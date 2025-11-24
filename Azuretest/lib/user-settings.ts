@@ -1,19 +1,27 @@
 /**
  * User Settings Management
- * Simple file-based storage for user Westlaw API keys
- * In production, this should be replaced with a proper database
+ * 
+ * SECURITY: Stores OAuth tokens server-side only.
+ * Tokens are NEVER sent to the client browser.
+ * 
+ * In production, use encrypted database (e.g., Azure Key Vault, AWS Secrets Manager)
  */
 
 import { promises as fs } from 'fs';
 import path from 'path';
 import { createHash } from 'crypto';
+import { OAuthToken } from './westlaw-oauth';
 
 const SETTINGS_DIR = path.join(process.cwd(), '.user-settings');
 
 export interface UserSettings {
   userId: string;
+  // Legacy API key support (deprecated in favor of OAuth)
   westlawApiKey?: string;
   westlawClientId?: string;
+  // OAuth token storage (SECURE: Server-side only)
+  oauthToken?: OAuthToken;
+  authMethod?: 'api_key' | 'oauth';
   createdAt: string;
   updatedAt: string;
 }
@@ -46,6 +54,8 @@ function getUserSettingsPath(userId: string): string {
 
 /**
  * Save user settings
+ * 
+ * SECURITY: OAuth tokens stored here are NEVER sent to client
  */
 export async function saveUserSettings(
   userId: string,
@@ -68,6 +78,8 @@ export async function saveUserSettings(
     userId,
     westlawApiKey: settings.westlawApiKey || existingSettings?.westlawApiKey,
     westlawClientId: settings.westlawClientId || existingSettings?.westlawClientId,
+    oauthToken: settings.oauthToken || existingSettings?.oauthToken,
+    authMethod: settings.authMethod || existingSettings?.authMethod || 'oauth',
     createdAt: existingSettings?.createdAt || now,
     updatedAt: now,
   };
@@ -104,11 +116,34 @@ export async function deleteUserSettings(userId: string): Promise<boolean> {
 }
 
 /**
- * Check if user has Westlaw configured
+ * Check if user has Westlaw configured (OAuth or API key)
  */
 export async function hasWestlawConfigured(userId: string): Promise<boolean> {
   const settings = await getUserSettings(userId);
-  return !!(settings?.westlawApiKey);
+  return !!(settings?.oauthToken || settings?.westlawApiKey);
+}
+
+/**
+ * Get user's OAuth token (server-side only)
+ * SECURITY: This function must NEVER be exposed via API to client
+ */
+export async function getUserOAuthToken(userId: string): Promise<OAuthToken | null> {
+  const settings = await getUserSettings(userId);
+  return settings?.oauthToken || null;
+}
+
+/**
+ * Save user's OAuth token (server-side only)
+ * SECURITY: Token is stored server-side and NEVER sent to browser
+ */
+export async function saveUserOAuthToken(
+  userId: string,
+  token: OAuthToken
+): Promise<void> {
+  await saveUserSettings(userId, {
+    oauthToken: token,
+    authMethod: 'oauth',
+  });
 }
 
 /**

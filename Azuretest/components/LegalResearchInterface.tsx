@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import WestlawConnection from './WestlawConnection';
+import WestlawConnectionOAuth from './WestlawConnectionOAuth';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -267,7 +267,7 @@ export default function LegalResearchInterface() {
               </svg>
             </button>
           </div>
-          <WestlawConnection onConnectionChange={setIsWestlawConnected} />
+          <WestlawConnectionOAuth onConnectionChange={setIsWestlawConnected} />
           
           <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <h4 className="text-sm font-semibold text-blue-900 mb-2">How it works</h4>

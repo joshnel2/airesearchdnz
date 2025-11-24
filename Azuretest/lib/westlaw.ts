@@ -1,7 +1,18 @@
 import axios, { AxiosInstance } from 'axios';
+import { getValidAccessToken } from './westlaw-oauth';
+import type { OAuthToken } from './westlaw-oauth';
+
+/**
+ * SECURITY NOTE:
+ * This client now supports both OAuth tokens and API keys.
+ * OAuth is the preferred and secure method.
+ */
 
 export interface WestlawConfig {
-  apiKey: string;
+  // OAuth token (preferred - secure)
+  oauthToken?: OAuthToken;
+  // Legacy API key (deprecated)
+  apiKey?: string;
   clientId?: string;
 }
 
@@ -33,17 +44,19 @@ export interface WestlawDocument {
 
 export class WestlawClient {
   private client: AxiosInstance;
-  private apiKey: string;
+  private oauthToken?: OAuthToken;
+  private apiKey?: string;
   private baseURL: string;
 
   constructor(config: WestlawConfig) {
+    this.oauthToken = config.oauthToken;
     this.apiKey = config.apiKey;
     this.baseURL = process.env.WESTLAW_API_BASE_URL || 'https://api.westlaw.com/v1';
     
+    // Create axios client (authorization header added per request)
     this.client = axios.create({
       baseURL: this.baseURL,
       headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
@@ -52,9 +65,27 @@ export class WestlawClient {
   }
 
   /**
+   * Get authorization header with valid token
+   * SECURITY: Handles token refresh automatically if expired
+   */
+  private async getAuthHeader(): Promise<string> {
+    if (this.oauthToken) {
+      // Use OAuth token (preferred method)
+      const validToken = await getValidAccessToken(this.oauthToken);
+      return `Bearer ${validToken}`;
+    } else if (this.apiKey) {
+      // Fall back to API key (legacy)
+      return `Bearer ${this.apiKey}`;
+    }
+    throw new Error('No authentication credentials provided');
+  }
+
+  /**
    * Search the Westlaw database
    * @param query - Natural language or boolean search query
    * @param options - Search options (jurisdiction, date range, document type, etc.)
+   * 
+   * SECURITY: Uses OAuth token automatically (with refresh if needed)
    */
   async search(
     query: string,
@@ -68,6 +99,8 @@ export class WestlawClient {
     } = {}
   ): Promise<WestlawSearchResponse> {
     try {
+      const authHeader = await this.getAuthHeader();
+      
       const params = {
         q: query,
         jurisdiction: options.jurisdiction?.join(','),
@@ -85,6 +118,9 @@ export class WestlawClient {
 
       const response = await this.client.get('/search', {
         params: filteredParams,
+        headers: {
+          'Authorization': authHeader,
+        },
       });
 
       return this.parseSearchResponse(response.data, query);
@@ -99,7 +135,12 @@ export class WestlawClient {
    */
   async getDocument(documentId: string): Promise<WestlawDocument> {
     try {
-      const response = await this.client.get(`/documents/${documentId}`);
+      const authHeader = await this.getAuthHeader();
+      const response = await this.client.get(`/documents/${documentId}`, {
+        headers: {
+          'Authorization': authHeader,
+        },
+      });
       return this.parseDocumentResponse(response.data);
     } catch (error) {
       console.error('Westlaw document retrieval error:', error);
@@ -112,8 +153,12 @@ export class WestlawClient {
    */
   async searchByCitation(citation: string): Promise<WestlawDocument | null> {
     try {
+      const authHeader = await this.getAuthHeader();
       const response = await this.client.get('/citations', {
         params: { citation },
+        headers: {
+          'Authorization': authHeader,
+        },
       });
       
       if (response.data && response.data.documentId) {
@@ -132,7 +177,12 @@ export class WestlawClient {
    */
   async getHeadnotes(documentId: string): Promise<string[]> {
     try {
-      const response = await this.client.get(`/documents/${documentId}/headnotes`);
+      const authHeader = await this.getAuthHeader();
+      const response = await this.client.get(`/documents/${documentId}/headnotes`, {
+        headers: {
+          'Authorization': authHeader,
+        },
+      });
       return response.data.headnotes || [];
     } catch (error) {
       console.error('Westlaw headnotes retrieval error:', error);
@@ -145,8 +195,12 @@ export class WestlawClient {
    */
   async getKeyCite(citation: string): Promise<any> {
     try {
+      const authHeader = await this.getAuthHeader();
       const response = await this.client.get('/keycite', {
         params: { citation },
+        headers: {
+          'Authorization': authHeader,
+        },
       });
       return response.data;
     } catch (error) {
@@ -156,15 +210,27 @@ export class WestlawClient {
   }
 
   /**
-   * Validate API key
+   * Validate credentials (OAuth token or API key)
    */
-  async validateApiKey(): Promise<boolean> {
+  async validateCredentials(): Promise<boolean> {
     try {
-      const response = await this.client.get('/validate');
+      const authHeader = await this.getAuthHeader();
+      const response = await this.client.get('/validate', {
+        headers: {
+          'Authorization': authHeader,
+        },
+      });
       return response.status === 200;
     } catch (error) {
       return false;
     }
+  }
+
+  /**
+   * @deprecated Use validateCredentials() instead
+   */
+  async validateApiKey(): Promise<boolean> {
+    return this.validateCredentials();
   }
 
   private parseSearchResponse(data: any, query: string): WestlawSearchResponse {
